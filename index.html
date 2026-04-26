@@ -11,7 +11,9 @@
         .bg-red-ixil { background-color: var(--red-ixil); }
         .text-red-ixil { color: var(--red-ixil); }
         .active-tab { border-bottom: 4px solid var(--yellow-ixil); color: var(--yellow-ixil) !important; }
-        input, select, textarea { font-size: 16px !important; } 
+        input, select, textarea { font-size: 16px !important; color: black !important; } 
+        /* Corrección para visibilidad de fecha en móviles */
+        input[type="date"] { min-height: 45px; background-color: white !important; }
     </style>
 </head>
 <body class="bg-stone-100">
@@ -51,8 +53,8 @@
             <div id="sec-responsables" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-700 h-fit">
                     <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Nuevo Responsable</h3>
-                    <input type="text" id="r_nombre" placeholder="Nombre Completo" class="w-full p-2 border rounded mb-2">
-                    <input type="text" id="r_cargo" placeholder="Cargo" class="w-full p-2 border rounded mb-3">
+                    <input type="text" id="r_nombre" placeholder="Nombre Completo" class="w-full p-2 border rounded mb-2 bg-white text-black">
+                    <input type="text" id="r_cargo" placeholder="Cargo" class="w-full p-2 border rounded mb-3 bg-white text-black">
                     <button id="add-r" class="w-full bg-red-ixil text-white py-2 rounded font-bold">AGREGAR PERSONA</button>
                 </div>
                 <div class="lg:col-span-2">
@@ -64,12 +66,12 @@
             <div id="sec-vehiculos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-700 h-fit">
                     <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Alta de Vehículo</h3>
-                    <select id="v_tipo" class="w-full p-2 border rounded mb-2 bg-white text-sm">
+                    <select id="v_tipo" class="w-full p-2 border rounded mb-2 bg-white text-black text-sm">
                         <option value="Carro">🚗 Carro / Camioneta</option>
                         <option value="Moto">🏍️ Motocicleta</option>
                     </select>
-                    <input type="text" id="v_modelo" placeholder="Modelo (Ej. Hilux Blanca)" class="w-full p-2 border rounded mb-2">
-                    <input type="text" id="v_placa" placeholder="Placa" class="w-full p-2 border rounded mb-3 uppercase">
+                    <input type="text" id="v_modelo" placeholder="Modelo (Ej. Hilux Blanca)" class="w-full p-2 border rounded mb-2 bg-white text-black">
+                    <input type="text" id="v_placa" placeholder="Placa" class="w-full p-2 border rounded mb-3 uppercase bg-white text-black">
                     <button id="add-v" class="w-full bg-red-ixil text-white py-2 rounded font-bold">GUARDAR VEHÍCULO</button>
                 </div>
                 <div class="lg:col-span-2">
@@ -80,23 +82,23 @@
 
             <div id="sec-mantenimientos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 h-fit">
-                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Registrar Acción</h3>
-                    <select id="s_vehiculo" class="w-full p-2 border rounded bg-white mb-2 text-sm"></select>
-                    <select id="s_tipo" class="w-full p-2 border rounded bg-white mb-2 text-sm" onchange="toggleS()">
+                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Registro de Acción</h3>
+                    <select id="s_vehiculo" class="w-full p-2 border rounded bg-white mb-2 text-sm text-black"></select>
+                    <select id="s_tipo" class="w-full p-2 border rounded bg-white mb-2 text-sm text-black" onchange="toggleS()">
                         <option value="Gasolina">Carga de Gasolina</option>
                         <option value="Mantenimiento">Mantenimiento Mecánico</option>
                         <option value="Otro">Otro (Incidente, Venta, etc.)</option>
                     </select>
-                    <div id="box-gas"><input type="number" id="s_litros" placeholder="Litros" class="w-full p-2 border rounded mb-2"></div>
-                    <div id="box-otro" class="hidden"><textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded mb-2"></textarea></div>
-                    <input type="date" id="s_fecha" class="w-full p-2 border rounded mb-2 text-sm">
-                    <select id="s_responsable" class="w-full p-2 border rounded bg-white mb-3 text-sm"></select>
+                    <div id="box-gas"><input type="number" id="s_litros" placeholder="Litros" class="w-full p-2 border rounded mb-2 bg-white text-black"></div>
+                    <div id="box-otro" class="hidden"><textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded mb-2 bg-white text-black"></textarea></div>
+                    <input type="date" id="s_fecha" class="w-full p-2 border rounded mb-2 text-sm text-black bg-white">
+                    <select id="s_responsable" class="w-full p-2 border rounded bg-white mb-3 text-sm text-black"></select>
                     <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-2 rounded font-bold shadow">GUARDAR REGISTRO</button>
                 </div>
                 <div class="lg:col-span-2">
                     <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
                         <h3 class="font-bold text-gray-700 uppercase text-xs tracking-widest self-center italic">Historial de Operaciones</h3>
-                        <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar placa o modelo..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white">
+                        <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar placa o modelo..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white text-black">
                     </div>
                     <div class="bg-white rounded-xl shadow overflow-x-auto border border-gray-100">
                         <table class="w-full text-left text-[11px] md:text-sm">
@@ -134,7 +136,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // LOGIN
+        // LÓGICA DE LOGIN
         document.getElementById('btn-login').onclick = () => {
             const u = document.getElementById('login_user').value.toLowerCase();
             const p = document.getElementById('login_pass').value;
@@ -145,7 +147,7 @@
             } else { alert("Acceso Incorrecto."); }
         };
 
-        // NAVEGACIÓN
+        // LÓGICA DE PESTAÑAS
         window.showTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab', 'text-white/80'));
@@ -157,7 +159,7 @@
         document.getElementById('btn-tab-v').onclick = () => showTab('vehiculos');
         document.getElementById('btn-tab-m').onclick = () => showTab('mantenimientos');
 
-        // CRUD FIREBASE
+        // AGREGAR RESPONSABLE
         document.getElementById('add-r').onclick = () => {
             const n = document.getElementById('r_nombre').value;
             const c = document.getElementById('r_cargo').value;
@@ -165,6 +167,7 @@
             document.getElementById('r_nombre').value = ''; document.getElementById('r_cargo').value = '';
         };
 
+        // AGREGAR VEHÍCULO (CON SELECTOR CARRO/MOTO)
         document.getElementById('add-v').onclick = () => {
             const t = document.getElementById('v_tipo').value;
             const m = document.getElementById('v_modelo').value;
@@ -173,6 +176,7 @@
             document.getElementById('v_modelo').value = ''; document.getElementById('v_placa').value = '';
         };
 
+        // AGREGAR REGISTRO E HISTORIAL (CON LIMPIEZA DE CAMPOS)
         document.getElementById('add-s').onclick = () => {
             const v = document.getElementById('s_vehiculo').value;
             const r = document.getElementById('s_responsable').value;
@@ -186,14 +190,15 @@
             push(ref(db, 'servicios'), {
                 u: v, t: tipoB, d: det, f: fecha, r: r, ts: Date.now()
             }).then(() => {
-                // LIMPIEZA DE CAMPOS DESPUÉS DE GUARDAR
+                // LIMPIEZA AUTOMÁTICA DE FORMULARIO
                 document.getElementById('s_litros').value = '';
                 document.getElementById('s_detalle').value = '';
                 document.getElementById('s_fecha').value = '';
-                alert("Registro guardado correctamente");
+                alert("Registro guardado con éxito");
             });
         };
 
+        // SINCRONIZACIÓN EN TIEMPO REAL CON FIREBASE
         function sync() {
             onValue(ref(db, 'responsables'), s => {
                 const list = document.getElementById('list-responsables');
@@ -245,8 +250,11 @@
         };
 
         document.getElementById('btn-ruptura').onclick = () => {
-            if(prompt("Introduce Clave Maestra:") === "XXX.XXX.XXX") {
+            const clave = prompt("Introduce Clave Maestra:");
+            if(clave === "2427.ADMIN") {
                 if(confirm("¿Deseas eliminar permanentemente toda la base de datos?")) set(ref(db, '/'), null).then(()=>location.reload());
+            } else if (clave !== null) {
+                alert("Clave incorrecta");
             }
         };
     </script>
