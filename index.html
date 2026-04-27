@@ -6,13 +6,14 @@
     <title>Control Vehicular - Ayuntamiento de Ixil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { --red-ixil: #b91c1c; --yellow-ixil: #facc15; }
         .bg-red-ixil { background-color: var(--red-ixil); }
         .text-red-ixil { color: var(--red-ixil); }
         .active-tab { border-bottom: 4px solid var(--yellow-ixil); color: var(--yellow-ixil) !important; }
         input, select, textarea { font-size: 16px !important; color: black !important; } 
-        /* Corrección para visibilidad de fecha en móviles */
         input[type="date"] { min-height: 45px; background-color: white !important; }
     </style>
 </head>
@@ -70,7 +71,7 @@
                         <option value="Carro">🚗 Carro / Camioneta</option>
                         <option value="Moto">🏍️ Motocicleta</option>
                     </select>
-                    <input type="text" id="v_modelo" placeholder="Modelo (Ej. Hilux Blanca)" class="w-full p-2 border rounded mb-2 bg-white text-black">
+                    <input type="text" id="v_modelo" placeholder="Modelo" class="w-full p-2 border rounded mb-2 bg-white text-black">
                     <input type="text" id="v_placa" placeholder="Placa" class="w-full p-2 border rounded mb-3 uppercase bg-white text-black">
                     <button id="add-v" class="w-full bg-red-ixil text-white py-2 rounded font-bold">GUARDAR VEHÍCULO</button>
                 </div>
@@ -93,7 +94,11 @@
                     <div id="box-otro" class="hidden"><textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded mb-2 bg-white text-black"></textarea></div>
                     <input type="date" id="s_fecha" class="w-full p-2 border rounded mb-2 text-sm text-black bg-white">
                     <select id="s_responsable" class="w-full p-2 border rounded bg-white mb-3 text-sm text-black"></select>
-                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-2 rounded font-bold shadow">GUARDAR REGISTRO</button>
+                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-2 rounded font-bold shadow mb-4">GUARDAR REGISTRO</button>
+                    <hr class="mb-4">
+                    <button onclick="generarReportePDF()" class="w-full bg-gray-800 text-white py-2 rounded font-bold text-xs shadow">
+                        <i class="fa-solid fa-file-pdf mr-2"></i> GENERAR REPORTE PDF
+                    </button>
                 </div>
                 <div class="lg:col-span-2">
                     <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
@@ -101,9 +106,9 @@
                         <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar placa o modelo..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white text-black">
                     </div>
                     <div class="bg-white rounded-xl shadow overflow-x-auto border border-gray-100">
-                        <table class="w-full text-left text-[11px] md:text-sm">
+                        <table id="tabla-historial" class="w-full text-left text-[10px] md:text-xs">
                             <thead class="bg-red-50 border-b text-red-900 uppercase font-black">
-                                <tr><th class="p-4">Vehículo</th><th class="p-4">Acción</th><th class="p-4">Detalle</th><th class="p-4">Eliminar</th></tr>
+                                <tr><th class="p-4">Fecha/Hora</th><th class="p-4">Vehículo</th><th class="p-4">Acción</th><th class="p-4">Detalle/Resp.</th><th class="p-4">Acción</th></tr>
                             </thead>
                             <tbody id="list-servicios" class="divide-y divide-gray-100"></tbody>
                         </table>
@@ -136,7 +141,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // LÓGICA DE LOGIN
+        // LOGIN
         document.getElementById('btn-login').onclick = () => {
             const u = document.getElementById('login_user').value.toLowerCase();
             const p = document.getElementById('login_pass').value;
@@ -147,7 +152,7 @@
             } else { alert("Acceso Incorrecto."); }
         };
 
-        // LÓGICA DE PESTAÑAS
+        // PESTAÑAS
         window.showTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab', 'text-white/80'));
@@ -159,7 +164,7 @@
         document.getElementById('btn-tab-v').onclick = () => showTab('vehiculos');
         document.getElementById('btn-tab-m').onclick = () => showTab('mantenimientos');
 
-        // AGREGAR RESPONSABLE
+        // CRUD
         document.getElementById('add-r').onclick = () => {
             const n = document.getElementById('r_nombre').value;
             const c = document.getElementById('r_cargo').value;
@@ -167,7 +172,6 @@
             document.getElementById('r_nombre').value = ''; document.getElementById('r_cargo').value = '';
         };
 
-        // AGREGAR VEHÍCULO (CON SELECTOR CARRO/MOTO)
         document.getElementById('add-v').onclick = () => {
             const t = document.getElementById('v_tipo').value;
             const m = document.getElementById('v_modelo').value;
@@ -176,29 +180,30 @@
             document.getElementById('v_modelo').value = ''; document.getElementById('v_placa').value = '';
         };
 
-        // AGREGAR REGISTRO E HISTORIAL (CON LIMPIEZA DE CAMPOS)
         document.getElementById('add-s').onclick = () => {
             const v = document.getElementById('s_vehiculo').value;
             const r = document.getElementById('s_responsable').value;
-            const fecha = document.getElementById('s_fecha').value;
+            const fechaManual = document.getElementById('s_fecha').value;
             
-            if(!v || !r || !fecha) return alert("Por favor llena Unidad, Fecha y Responsable");
+            if(!v || !r || !fechaManual) return alert("Completa Unidad, Fecha y Responsable");
             
             const tipoB = document.getElementById('s_tipo').value;
             const det = tipoB === 'Gasolina' ? document.getElementById('s_litros').value + ' Lts' : document.getElementById('s_detalle').value;
             
+            // Generar hora actual
+            const horaActual = new Date().toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'});
+
             push(ref(db, 'servicios'), {
-                u: v, t: tipoB, d: det, f: fecha, r: r, ts: Date.now()
+                u: v, t: tipoB, d: det, f: fechaManual, h: horaActual, r: r, ts: Date.now()
             }).then(() => {
-                // LIMPIEZA AUTOMÁTICA DE FORMULARIO
+                // LIMPIEZA DE CAMPOS
                 document.getElementById('s_litros').value = '';
                 document.getElementById('s_detalle').value = '';
                 document.getElementById('s_fecha').value = '';
-                alert("Registro guardado con éxito");
+                alert("Registro Guardado");
             });
         };
 
-        // SINCRONIZACIÓN EN TIEMPO REAL CON FIREBASE
         function sync() {
             onValue(ref(db, 'responsables'), s => {
                 const list = document.getElementById('list-responsables');
@@ -228,12 +233,26 @@
                 list.innerHTML = "";
                 let arr = []; s.forEach(c => { arr.push({k: c.key, ...c.val()}) });
                 arr.sort((a,b) => b.ts - a.ts).forEach(d => {
-                    list.innerHTML += `<tr><td class="p-4 font-bold text-gray-800 text-[10px]">${d.u}</td><td class="p-4"><span class="bg-red-100 px-2 py-1 rounded text-[9px] font-black uppercase text-red-800">${d.t}</span></td><td class="p-4 text-gray-600 italic text-[10px]">${d.d}<br><small class="text-gray-400">Por: ${d.r} (${d.f})</small></td><td class="p-4 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    list.innerHTML += `<tr>
+                        <td class="p-4 font-bold text-gray-800 uppercase">${d.f}<br><span class="text-[9px] text-red-500 font-normal italic">${d.h || ''}</span></td>
+                        <td class="p-4 uppercase text-gray-700 font-black">${d.u}</td>
+                        <td class="p-4"><span class="bg-red-100 px-2 py-1 rounded text-[9px] font-black uppercase text-red-800">${d.t}</span></td>
+                        <td class="p-4 text-gray-600 italic text-[10px]">${d.d}<br><small class="text-gray-400 font-normal">Por: ${d.r}</small></td>
+                        <td class="p-4 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-300 hover:text-red-600"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
                 });
             });
         }
 
-        window.elimF = (p, k) => { if(confirm("¿Eliminar este registro?")) remove(ref(db, `${p}/${k}`)); };
+        // ELIMINAR CON PIN
+        window.elimF = (p, k) => { 
+            const pin = prompt("🔐 PIN DE SEGURIDAD PARA ELIMINAR:");
+            if(pin === "2427") {
+                remove(ref(db, `${p}/${k}`)); 
+            } else if (pin !== null) {
+                alert("PIN INCORRECTO");
+            }
+        };
         
         window.filtrar = () => {
             const input = document.getElementById('buscador-placa').value.toUpperCase();
@@ -249,12 +268,48 @@
             document.getElementById('box-otro').classList.toggle('hidden', t === 'Gasolina');
         };
 
+        // REPORTE PDF
+        window.generarReportePDF = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(185, 28, 28);
+            doc.text("AYUNTAMIENTO DE IXIL, YUCATÁN", 105, 20, { align: "center" });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text("Reporte de Control Vehicular 2024-2027", 105, 28, { align: "center" });
+            
+            const rows = [];
+            document.querySelectorAll("#list-servicios tr").forEach(tr => {
+                if(tr.style.display !== "none") {
+                    const cells = tr.querySelectorAll("td");
+                    rows.push([
+                        cells[0].innerText.replace("\n", " "),
+                        cells[1].innerText,
+                        cells[2].innerText,
+                        cells[3].innerText.replace("\n", " ")
+                    ]);
+                }
+            });
+
+            doc.autoTable({
+                head: [['Fecha/Hora', 'Vehículo', 'Acción', 'Detalles / Responsable']],
+                body: rows,
+                startY: 35,
+                theme: 'striped',
+                headStyles: { fillColor: [185, 28, 28] },
+                styles: { fontSize: 8 }
+            });
+
+            doc.save(`Reporte_Ixil_${new Date().toLocaleDateString()}.pdf`);
+        };
+
         document.getElementById('btn-ruptura').onclick = () => {
             const clave = prompt("Introduce Clave Maestra:");
             if(clave === "2427.ADMIN") {
                 if(confirm("¿Deseas eliminar permanentemente toda la base de datos?")) set(ref(db, '/'), null).then(()=>location.reload());
-            } else if (clave !== null) {
-                alert("Clave incorrecta");
             }
         };
     </script>
