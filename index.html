@@ -1,191 +1,262 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control Vehicular Ixil</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<!-- PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<style>
-:root { --red-ixil:#b91c1c; --yellow-ixil:#facc15; }
-.bg-red-ixil{background:var(--red-ixil);}
-input,select,textarea{font-size:16px!important;color:black!important;}
-input[type="date"]{min-height:45px;background:white!important;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control Vehicular - Ayuntamiento de Ixil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --red-ixil: #b91c1c; --yellow-ixil: #facc15; }
+        .bg-red-ixil { background-color: var(--red-ixil); }
+        .text-red-ixil { color: var(--red-ixil); }
+        .active-tab { border-bottom: 4px solid var(--yellow-ixil); color: var(--yellow-ixil) !important; }
+        input, select, textarea { font-size: 16px !important; color: black !important; } 
+        /* Corrección para visibilidad de fecha en móviles */
+        input[type="date"] { min-height: 45px; background-color: white !important; }
+    </style>
 </head>
-
 <body class="bg-stone-100">
 
-<!-- LOGIN -->
-<div id="login-screen" class="min-h-screen flex items-center justify-center">
-<div class="bg-white p-6 rounded shadow">
-<input id="login_user" placeholder="Usuario" class="border p-2 w-full mb-2">
-<input id="login_pass" placeholder="PIN" type="password" class="border p-2 w-full mb-2">
-<button id="btn-login" class="bg-red-700 text-white w-full p-2">Entrar</button>
-</div>
-</div>
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border-t-8 border-red-700">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-red-700 uppercase italic">Ayuntamiento de Ixil</h1>
+                <p class="text-gray-500 font-semibold text-sm">Sistema de Control 2024-2027</p>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="login_user" placeholder="Usuario" class="w-full p-3 border rounded shadow-sm focus:ring-2 focus:ring-red-500 outline-none">
+                <input type="password" id="login_pass" inputmode="numeric" placeholder="PIN de Acceso" class="w-full p-3 border rounded shadow-sm focus:ring-2 focus:ring-red-500 outline-none">
+                <button id="btn-login" class="w-full bg-red-ixil text-white py-3 rounded-lg font-bold hover:bg-red-800 transition shadow-lg active:scale-95">INGRESAR AL PANEL</button>
+            </div>
+        </div>
+    </div>
 
-<!-- APP -->
-<div id="app-screen" class="hidden p-4">
+    <div id="app-screen" class="hidden">
+        <header class="bg-red-ixil text-white shadow-xl sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold italic tracking-tighter text-yellow-400">IXIL <span class="text-white font-light">GESTIÓN</span></h2>
+                    <p class="text-[10px] font-bold uppercase text-white/70">Estado de Yucatán</p>
+                </div>
+                <button onclick="location.reload()" class="bg-white text-red-700 px-4 py-1 rounded font-bold text-sm hover:bg-yellow-400 transition shadow">SALIR</button>
+            </div>
+            <nav class="max-w-7xl mx-auto px-4 flex gap-6 mt-2 overflow-x-auto">
+                <button id="btn-tab-r" class="py-2 px-4 font-bold active-tab text-white text-xs uppercase">Responsables</button>
+                <button id="btn-tab-v" class="py-2 px-4 font-bold text-white/80 text-xs uppercase">Vehículos</button>
+                <button id="btn-tab-m" class="py-2 px-4 font-bold text-white/80 text-xs uppercase">Historial</button>
+            </nav>
+        </header>
 
-<button id="salir" class="bg-white border px-4 py-2 mb-4">SALIR</button>
+        <main class="max-w-7xl mx-auto p-4 md:p-6">
+            
+            <div id="sec-responsables" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-700 h-fit">
+                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Nuevo Responsable</h3>
+                    <input type="text" id="r_nombre" placeholder="Nombre Completo" class="w-full p-2 border rounded mb-2 bg-white text-black">
+                    <input type="text" id="r_cargo" placeholder="Cargo" class="w-full p-2 border rounded mb-3 bg-white text-black">
+                    <button id="add-r" class="w-full bg-red-ixil text-white py-2 rounded font-bold">AGREGAR PERSONA</button>
+                </div>
+                <div class="lg:col-span-2">
+                    <h3 class="font-bold mb-4 uppercase text-gray-700 text-xs tracking-widest">Personal Registrado</h3>
+                    <div id="list-responsables" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
 
-<!-- PDF -->
-<div class="flex gap-2 mb-4">
-<button onclick="pdfTodo()" class="bg-red-600 text-white px-3 py-2 rounded">PDF TODO</button>
-<button onclick="pdfRango()" class="bg-yellow-400 px-3 py-2 rounded">PDF POR FECHA</button>
-</div>
+            <div id="sec-vehiculos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-700 h-fit">
+                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Alta de Vehículo</h3>
+                    <select id="v_tipo" class="w-full p-2 border rounded mb-2 bg-white text-black text-sm">
+                        <option value="Carro">🚗 Carro / Camioneta</option>
+                        <option value="Moto">🏍️ Motocicleta</option>
+                    </select>
+                    <input type="text" id="v_modelo" placeholder="Modelo (Ej. Hilux Blanca)" class="w-full p-2 border rounded mb-2 bg-white text-black">
+                    <input type="text" id="v_placa" placeholder="Placa" class="w-full p-2 border rounded mb-3 uppercase bg-white text-black">
+                    <button id="add-v" class="w-full bg-red-ixil text-white py-2 rounded font-bold">GUARDAR VEHÍCULO</button>
+                </div>
+                <div class="lg:col-span-2">
+                    <h3 class="font-bold mb-4 uppercase text-gray-700 text-xs tracking-widest">Parque Vehicular</h3>
+                    <div id="list-vehiculos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
 
-<input type="date" id="f1">
-<input type="date" id="f2">
+            <div id="sec-mantenimientos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 h-fit">
+                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic">Registro de Acción</h3>
+                    <select id="s_vehiculo" class="w-full p-2 border rounded bg-white mb-2 text-sm text-black"></select>
+                    <select id="s_tipo" class="w-full p-2 border rounded bg-white mb-2 text-sm text-black" onchange="toggleS()">
+                        <option value="Gasolina">Carga de Gasolina</option>
+                        <option value="Mantenimiento">Mantenimiento Mecánico</option>
+                        <option value="Otro">Otro (Incidente, Venta, etc.)</option>
+                    </select>
+                    <div id="box-gas"><input type="number" id="s_litros" placeholder="Litros" class="w-full p-2 border rounded mb-2 bg-white text-black"></div>
+                    <div id="box-otro" class="hidden"><textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded mb-2 bg-white text-black"></textarea></div>
+                    <input type="date" id="s_fecha" class="w-full p-2 border rounded mb-2 text-sm text-black bg-white">
+                    <select id="s_responsable" class="w-full p-2 border rounded bg-white mb-3 text-sm text-black"></select>
+                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-2 rounded font-bold shadow">GUARDAR REGISTRO</button>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
+                        <h3 class="font-bold text-gray-700 uppercase text-xs tracking-widest self-center italic">Historial de Operaciones</h3>
+                        <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar placa o modelo..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white text-black">
+                    </div>
+                    <div class="bg-white rounded-xl shadow overflow-x-auto border border-gray-100">
+                        <table class="w-full text-left text-[11px] md:text-sm">
+                            <thead class="bg-red-50 border-b text-red-900 uppercase font-black">
+                                <tr><th class="p-4">Vehículo</th><th class="p-4">Acción</th><th class="p-4">Detalle</th><th class="p-4">Eliminar</th></tr>
+                            </thead>
+                            <tbody id="list-servicios" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-<!-- FORM -->
-<div class="mt-4">
-<select id="s_vehiculo"></select>
-<select id="s_tipo" onchange="toggleS()">
-<option value="Gasolina">Gasolina</option>
-<option value="Otro">Otro</option>
-</select>
+            <div class="mt-24 border-t border-red-200 pt-10 text-center pb-12">
+                <button id="btn-ruptura" class="bg-white text-red-700 border-2 border-red-100 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-700 hover:text-white transition-all shadow-sm">
+                    <i class="fa-solid fa-bomb mr-2"></i> Romper Sistema / Eliminar Todo
+                </button>
+            </div>
+        </main>
+    </div>
 
-<input id="s_litros" placeholder="Litros">
-<textarea id="s_detalle"></textarea>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-<label>Fecha</label>
-<input type="date" id="s_fecha">
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrcQkkYW3mFtrn8UqRCBm-hihlxvqRkmM",
+            authDomain: "ixil-vehicular.firebaseapp.com",
+            databaseURL: "https://ixil-vehicular-default-rtdb.firebaseio.com", 
+            projectId: "ixil-vehicular",
+            storageBucket: "ixil-vehicular.firebasestorage.app",
+            messagingSenderId: "303469283462",
+            appId: "1:303469283462:web:79f85d6ea5b6609a6ee907"
+        };
 
-<select id="s_responsable"></select>
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-<button id="add-s">Guardar</button>
-</div>
+        // LÓGICA DE LOGIN
+        document.getElementById('btn-login').onclick = () => {
+            const u = document.getElementById('login_user').value.toLowerCase();
+            const p = document.getElementById('login_pass').value;
+            if (u === "ayuntamiento" && p === "2427") {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                sync();
+            } else { alert("Acceso Incorrecto."); }
+        };
 
-<table class="w-full mt-4">
-<tbody id="list-servicios"></tbody>
-</table>
+        // LÓGICA DE PESTAÑAS
+        window.showTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab', 'text-white/80'));
+            document.getElementById('sec-' + tab).classList.remove('hidden');
+            const btns = {responsables: 'btn-tab-r', vehiculos: 'btn-tab-v', mantenimientos: 'btn-tab-m'};
+            document.getElementById(btns[tab]).classList.add('active-tab');
+        };
+        document.getElementById('btn-tab-r').onclick = () => showTab('responsables');
+        document.getElementById('btn-tab-v').onclick = () => showTab('vehiculos');
+        document.getElementById('btn-tab-m').onclick = () => showTab('mantenimientos');
 
-</div>
+        // AGREGAR RESPONSABLE
+        document.getElementById('add-r').onclick = () => {
+            const n = document.getElementById('r_nombre').value;
+            const c = document.getElementById('r_cargo').value;
+            if(n && c) push(ref(db, 'responsables'), { nombre: n, cargo: c });
+            document.getElementById('r_nombre').value = ''; document.getElementById('r_cargo').value = '';
+        };
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        // AGREGAR VEHÍCULO (CON SELECTOR CARRO/MOTO)
+        document.getElementById('add-v').onclick = () => {
+            const t = document.getElementById('v_tipo').value;
+            const m = document.getElementById('v_modelo').value;
+            const p = document.getElementById('v_placa').value.toUpperCase();
+            if(m && p) push(ref(db, 'vehiculos'), { tipo: t, modelo: m, placa: p });
+            document.getElementById('v_modelo').value = ''; document.getElementById('v_placa').value = '';
+        };
 
-const app=initializeApp({
-apiKey:"AIza...",
-databaseURL:"https://ixil-vehicular-default-rtdb.firebaseio.com"
-});
-const db=getDatabase(app);
+        // AGREGAR REGISTRO E HISTORIAL (CON LIMPIEZA DE CAMPOS)
+        document.getElementById('add-s').onclick = () => {
+            const v = document.getElementById('s_vehiculo').value;
+            const r = document.getElementById('s_responsable').value;
+            const fecha = document.getElementById('s_fecha').value;
+            
+            if(!v || !r || !fecha) return alert("Por favor llena Unidad, Fecha y Responsable");
+            
+            const tipoB = document.getElementById('s_tipo').value;
+            const det = tipoB === 'Gasolina' ? document.getElementById('s_litros').value + ' Lts' : document.getElementById('s_detalle').value;
+            
+            push(ref(db, 'servicios'), {
+                u: v, t: tipoB, d: det, f: fecha, r: r, ts: Date.now()
+            }).then(() => {
+                // LIMPIEZA AUTOMÁTICA DE FORMULARIO
+                document.getElementById('s_litros').value = '';
+                document.getElementById('s_detalle').value = '';
+                document.getElementById('s_fecha').value = '';
+                alert("Registro guardado con éxito");
+            });
+        };
 
-let datos=[];
+        // SINCRONIZACIÓN EN TIEMPO REAL CON FIREBASE
+        function sync() {
+            onValue(ref(db, 'responsables'), s => {
+                const list = document.getElementById('list-responsables');
+                const sel = document.getElementById('s_responsable');
+                list.innerHTML = ""; sel.innerHTML = '<option value="">Autoriza...</option>';
+                s.forEach(c => {
+                    const d = c.val();
+                    list.innerHTML += `<div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-yellow-400 flex justify-between items-center text-left"><div><p class="font-bold text-xs text-red-900">${d.nombre}</p><p class="text-[9px] uppercase text-gray-400">${d.cargo}</p></div><button onclick="elimF('responsables','${c.key}')" class="text-red-400"><i class="fa-solid fa-trash-can"></i></button></div>`;
+                    sel.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`;
+                });
+            });
 
-// LOGIN
-btn-login.onclick=()=>{
-if(login_user.value=="ayuntamiento"&&login_pass.value=="2427"){
-login-screen.style.display="none";
-app-screen.style.display="block";
-sync();
-}else alert("Error");
-};
+            onValue(ref(db, 'vehiculos'), s => {
+                const list = document.getElementById('list-vehiculos');
+                const sel = document.getElementById('s_vehiculo');
+                list.innerHTML = ""; sel.innerHTML = '<option value="">Vehículo...</option>';
+                s.forEach(c => {
+                    const d = c.val();
+                    const icon = d.tipo === 'Moto' ? '🏍️' : '🚗';
+                    list.innerHTML += `<div class="bg-white p-3 rounded-xl border-l-8 border-red-700 shadow-sm flex justify-between items-center text-left"><div><p class="font-black text-xs uppercase text-gray-800">${icon} ${d.modelo}</p><p class="text-[10px] text-red-700 font-mono">${d.placa}</p></div><button onclick="elimF('vehiculos','${c.key}')" class="text-red-400"><i class="fa-solid fa-trash-can"></i></button></div>`;
+                    sel.innerHTML += `<option value="${d.modelo} [${d.placa}]">${d.modelo} (${d.placa})</option>`;
+                });
+            });
 
-// SALIR
-salir.onclick=()=>{
-if(confirm("¿Salir?")) location.reload();
-};
+            onValue(ref(db, 'servicios'), s => {
+                const list = document.getElementById('list-servicios');
+                list.innerHTML = "";
+                let arr = []; s.forEach(c => { arr.push({k: c.key, ...c.val()}) });
+                arr.sort((a,b) => b.ts - a.ts).forEach(d => {
+                    list.innerHTML += `<tr><td class="p-4 font-bold text-gray-800 text-[10px]">${d.u}</td><td class="p-4"><span class="bg-red-100 px-2 py-1 rounded text-[9px] font-black uppercase text-red-800">${d.t}</span></td><td class="p-4 text-gray-600 italic text-[10px]">${d.d}<br><small class="text-gray-400">Por: ${d.r} (${d.f})</small></td><td class="p-4 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                });
+            });
+        }
 
-// GUARDAR
-add-s.onclick=()=>{
-if(!s_vehiculo.value||!s_responsable.value||!s_fecha.value)return alert("Faltan datos");
+        window.elimF = (p, k) => { if(confirm("¿Eliminar este registro?")) remove(ref(db, `${p}/${k}`)); };
+        
+        window.filtrar = () => {
+            const input = document.getElementById('buscador-placa').value.toUpperCase();
+            const filas = document.getElementById('list-servicios').getElementsByTagName('tr');
+            for (let i = 0; i < filas.length; i++) {
+                filas[i].style.display = filas[i].textContent.toUpperCase().indexOf(input) > -1 ? "" : "none";
+            }
+        };
 
-const hora=new Date().toLocaleTimeString();
+        window.toggleS = () => {
+            const t = document.getElementById('s_tipo').value;
+            document.getElementById('box-gas').classList.toggle('hidden', t !== 'Gasolina');
+            document.getElementById('box-otro').classList.toggle('hidden', t === 'Gasolina');
+        };
 
-push(ref(db,"servicios"),{
-u:s_vehiculo.value,
-t:s_tipo.value,
-d:s_tipo.value=="Gasolina"?s_litros.value+" Lts":s_detalle.value,
-f:s_fecha.value,
-h:hora,
-r:s_responsable.value,
-ts:Date.now()
-}).then(()=>{
-s_vehiculo.value="";
-s_responsable.value="";
-s_tipo.value="Gasolina";
-s_litros.value="";
-s_detalle.value="";
-s_fecha.value="";
-toggleS();
-alert("Guardado");
-});
-};
-
-// SYNC
-function sync(){
-onValue(ref(db,"servicios"),s=>{
-datos=[];
-list-servicios.innerHTML="";
-s.forEach(c=>{
-const d=c.val();
-datos.push({k:c.key,...d});
-list-servicios.innerHTML+=`
-<tr>
-<td>${d.u}</td>
-<td>${d.t}</td>
-<td>${d.d}</td>
-<td>${d.f} ${d.h||""}</td>
-<td><button onclick="elim('${c.key}')">X</button></td>
-</tr>`;
-});
-});
-}
-
-// ELIMINAR CON NIP
-window.elim=id=>{
-const nip=prompt("NIP:");
-if(nip==="2427"){
-if(confirm("¿Eliminar?")) remove(ref(db,"servicios/"+id));
-}else alert("Incorrecto");
-};
-
-// PDF TODO
-window.pdfTodo=()=>{
-const {jsPDF}=window.jspdf;
-const doc=new jsPDF();
-let y=10;
-datos.forEach(d=>{
-doc.text(`${d.u} ${d.t} ${d.d} ${d.f} ${d.h||""}`,10,y);
-y+=10;
-});
-doc.save("reporte.pdf");
-};
-
-// PDF RANGO
-window.pdfRango=()=>{
-if(!f1.value||!f2.value)return alert("Fechas");
-const {jsPDF}=window.jspdf;
-const doc=new jsPDF();
-let y=10;
-datos.filter(d=>d.f>=f1.value&&d.f<=f2.value)
-.forEach(d=>{
-doc.text(`${d.u} ${d.t} ${d.d} ${d.f}`,10,y);
-y+=10;
-});
-doc.save("reporte_fecha.pdf");
-};
-
-window.toggleS=()=>{
-if(s_tipo.value=="Gasolina"){
-s_litros.style.display="block";
-s_detalle.style.display="none";
-}else{
-s_litros.style.display="none";
-s_detalle.style.display="block";
-}
-};
-
-</script>
-
+        document.getElementById('btn-ruptura').onclick = () => {
+            const clave = prompt("Introduce Clave Maestra:");
+            if(clave === "2427.ADMIN") {
+                if(confirm("¿Deseas eliminar permanentemente toda la base de datos?")) set(ref(db, '/'), null).then(()=>location.reload());
+            } else if (clave !== null) {
+                alert("Clave incorrecta");
+            }
+        };
+    </script>
 </body>
 </html>
