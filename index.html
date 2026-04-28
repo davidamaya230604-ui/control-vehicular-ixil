@@ -14,28 +14,8 @@
         .text-red-ixil { color: var(--red-ixil); }
         .active-tab { border-bottom: 4px solid var(--yellow-ixil); color: var(--yellow-ixil) !important; }
         input, select, textarea { font-size: 16px !important; color: black !important; } 
-        
-        /* Ajuste para que el calendario se vea en iPhone */
-        input[type="date"] {
-            min-height: 45px;
-            background-color: white !important;
-            display: flex;
-            align-items: center;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            display: block !important;
-            background: transparent;
-            bottom: 0;
-            color: transparent;
-            cursor: pointer;
-            height: auto;
-            left: 0;
-            position: absolute;
-            right: 0;
-            top: 0;
-            width: auto;
-        }
-        .input-contenedor { position: relative; }
+        input[type="date"] { min-height: 45px; background-color: white !important; display: flex; align-items: center; position: relative; }
+        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
         .icono-fecha { position: absolute; right: 10px; top: 12px; pointer-events: none; color: #b91c1c; }
     </style>
 </head>
@@ -50,7 +30,7 @@
             <div class="space-y-4">
                 <input type="text" id="login_user" placeholder="Usuario" class="w-full p-3 border rounded shadow-sm focus:ring-2 focus:ring-red-500 outline-none">
                 <input type="password" id="login_pass" inputmode="numeric" placeholder="PIN de Acceso" class="w-full p-3 border rounded shadow-sm focus:ring-2 focus:ring-red-500 outline-none">
-                <button id="btn-login" class="w-full bg-red-ixil text-white py-3 rounded-lg font-bold hover:bg-red-800 transition shadow-lg active:scale-95 text-sm uppercase">Ingresar al Panel</button>
+                <button id="btn-login" class="w-full bg-red-ixil text-white py-3 rounded-lg font-bold uppercase text-sm">Ingresar al Panel</button>
             </div>
         </div>
     </div>
@@ -62,7 +42,7 @@
                     <h2 class="text-xl font-bold italic tracking-tighter text-yellow-400">IXIL <span class="text-white font-light">GESTIÓN</span></h2>
                     <p class="text-[10px] font-bold uppercase text-white/70">Estado de Yucatán</p>
                 </div>
-                <button onclick="confirmarSalida()" class="bg-white text-red-700 px-4 py-1 rounded font-bold text-sm hover:bg-yellow-400 transition shadow">SALIR</button>
+                <button onclick="confirmarSalida()" class="bg-white text-red-700 px-4 py-1 rounded font-bold text-sm">SALIR</button>
             </div>
             <nav class="max-w-7xl mx-auto px-4 flex gap-6 mt-2 overflow-x-auto">
                 <button id="btn-tab-r" class="py-2 px-4 font-bold active-tab text-white text-xs uppercase">Responsables</button>
@@ -80,9 +60,7 @@
                     <input type="text" id="r_cargo" placeholder="Cargo" class="w-full p-2 border rounded mb-3 bg-white">
                     <button id="add-r" class="w-full bg-red-ixil text-white py-2 rounded font-bold uppercase text-xs">Agregar Persona</button>
                 </div>
-                <div class="lg:col-span-2">
-                    <div id="list-responsables" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-                </div>
+                <div id="list-responsables" class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </div>
 
             <div id="sec-vehiculos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -92,19 +70,24 @@
                         <option value="Carro">🚗 Carro / Camioneta</option>
                         <option value="Moto">🏍️ Motocicleta</option>
                     </select>
-                    <input type="text" id="v_modelo" placeholder="Modelo (Ej. Hilux Blanca)" class="w-full p-2 border rounded mb-2 bg-white">
+                    <input type="text" id="v_modelo" placeholder="Modelo" class="w-full p-2 border rounded mb-2 bg-white">
                     <input type="text" id="v_placa" placeholder="Placa" class="w-full p-2 border rounded mb-3 uppercase bg-white">
                     <button id="add-v" class="w-full bg-red-ixil text-white py-2 rounded font-bold uppercase text-xs">Guardar Vehículo</button>
                 </div>
-                <div class="lg:col-span-2">
-                    <div id="list-vehiculos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                </div>
+                <div id="list-vehiculos" class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div id="sec-mantenimientos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 h-fit">
                     <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic text-center">Registro de Acción</h3>
+                    
+                    <select id="f_tipo_registro" class="w-full p-2 border rounded bg-white mb-2 text-sm font-bold border-red-200" onchange="filtrarUnidadesRegistro()">
+                        <option value="Carro">Mostrar: Carros / Camionetas 🚗</option>
+                        <option value="Moto">Mostrar: Motocicletas 🏍️</option>
+                    </select>
+
                     <select id="s_vehiculo" class="w-full p-2 border rounded bg-white mb-2 text-sm"></select>
+                    
                     <select id="s_tipo" class="w-full p-2 border rounded bg-white mb-2 text-sm" onchange="toggleS()">
                         <option value="Gasolina">Carga de Gasolina</option>
                         <option value="Mantenimiento">Mantenimiento Mecánico</option>
@@ -112,7 +95,7 @@
                     </select>
                     
                     <div id="box-gas" class="relative mb-2">
-                        <input type="number" id="s_litros" inputmode="decimal" placeholder="Cantidad de gasolina" class="w-full p-2 border rounded pr-8 bg-white">
+                        <input type="number" id="s_litros" inputmode="decimal" placeholder="Cantidad" class="w-full p-2 border rounded pr-8 bg-white">
                         <span class="absolute right-3 top-2 font-bold text-gray-400">L</span>
                     </div>
 
@@ -120,24 +103,27 @@
                         <textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded bg-white"></textarea>
                     </div>
 
-                    <div class="input-contenedor mb-2">
+                    <div class="relative mb-2">
                         <input type="date" id="s_fecha" class="w-full p-2 border rounded bg-white">
                         <i class="fa-solid fa-calendar-days icono-fecha"></i>
                     </div>
 
                     <select id="s_responsable" class="w-full p-2 border rounded bg-white mb-3 text-sm"></select>
-                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-2 rounded font-bold shadow mb-4 uppercase text-xs">Guardar Registro</button>
+                    
+                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-3 rounded font-bold shadow mb-4 uppercase text-xs">Guardar Registro</button>
+                    
                     <button onclick="generarReportePDF()" class="w-full bg-slate-800 text-white py-2 rounded font-bold text-[10px] shadow uppercase italic">
                         <i class="fa-solid fa-file-pdf mr-2"></i> Generar Reporte PDF
                     </button>
                 </div>
+
                 <div class="lg:col-span-2">
                     <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
                         <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest self-center italic">Historial de Operaciones</h3>
                         <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar unidad..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white">
                     </div>
                     <div class="bg-white rounded-xl shadow overflow-x-auto">
-                        <table id="tabla-historial" class="w-full text-left text-[9px] md:text-xs">
+                        <table class="w-full text-left text-[9px] md:text-xs">
                             <thead class="bg-red-50 border-b text-red-900 uppercase font-black">
                                 <tr><th class="p-3">Fecha/Hora</th><th class="p-3">Vehículo</th><th class="p-3">Acción</th><th class="p-3">Detalle</th><th class="p-3">X</th></tr>
                             </thead>
@@ -145,12 +131,6 @@
                         </table>
                     </div>
                 </div>
-            </div>
-
-            <div class="mt-20 border-t border-red-200 pt-10 text-center pb-12">
-                <button id="btn-ruptura" class="bg-white text-red-300 border border-red-50 px-6 py-2 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-red-700 hover:text-white transition-all shadow-sm">
-                    Eliminar Base de Datos
-                </button>
             </div>
         </main>
     </div>
@@ -171,6 +151,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let listaVehiculosGlobal = [];
 
         // LOGIN
         document.getElementById('btn-login').onclick = () => {
@@ -183,11 +164,8 @@
             } else { alert("Acceso Incorrecto."); }
         };
 
-        // FUNCIÓN CONFIRMAR SALIDA
         window.confirmarSalida = () => {
-            if(confirm("¿Estás seguro que deseas cerrar la sesión y abandonar la aplicación?")) {
-                location.reload();
-            }
+            if(confirm("¿Abandonar la aplicación?")) location.reload();
         };
 
         // PESTAÑAS
@@ -202,14 +180,7 @@
         document.getElementById('btn-tab-v').onclick = () => showTab('vehiculos');
         document.getElementById('btn-tab-m').onclick = () => showTab('mantenimientos');
 
-        // CRUD
-        document.getElementById('add-r').onclick = () => {
-            const n = document.getElementById('r_nombre').value;
-            const c = document.getElementById('r_cargo').value;
-            if(n && c) push(ref(db, 'responsables'), { nombre: n, cargo: c });
-            document.getElementById('r_nombre').value = ''; document.getElementById('r_cargo').value = '';
-        };
-
+        // CRUD VEHÍCULOS
         document.getElementById('add-v').onclick = () => {
             const t = document.getElementById('v_tipo').value;
             const m = document.getElementById('v_modelo').value;
@@ -218,11 +189,22 @@
             document.getElementById('v_modelo').value = ''; document.getElementById('v_placa').value = '';
         };
 
+        // FILTRO DE REGISTRO
+        window.filtrarUnidadesRegistro = () => {
+            const tipoFiltro = document.getElementById('f_tipo_registro').value;
+            const sel = document.getElementById('s_vehiculo');
+            sel.innerHTML = '<option value="">Seleccionar Unidad...</option>';
+            listaVehiculosGlobal.filter(v => v.tipo === tipoFiltro).forEach(v => {
+                sel.innerHTML += `<option value="${v.modelo} [${v.placa}]">${v.modelo} (${v.placa})</option>`;
+            });
+        };
+
+        // GUARDAR REGISTRO Y LIMPIAR
         document.getElementById('add-s').onclick = () => {
             const v = document.getElementById('s_vehiculo').value;
             const r = document.getElementById('s_responsable').value;
             const f = document.getElementById('s_fecha').value;
-            if(!v || !r || !f) return alert("Llena todos los campos (Unidad, Fecha y Responsable)");
+            if(!v || !r || !f) return alert("Llena los campos obligatorios");
             
             const tipoB = document.getElementById('s_tipo').value;
             const det = tipoB === 'Gasolina' ? document.getElementById('s_litros').value + ' L' : document.getElementById('s_detalle').value;
@@ -230,10 +212,15 @@
 
             push(ref(db, 'servicios'), { u: v, t: tipoB, d: det, f: f, h: h, r: r, ts: Date.now() })
             .then(() => {
+                // LIMPIEZA TOTAL DE REGISTRO
+                document.getElementById('s_vehiculo').value = '';
+                document.getElementById('s_tipo').value = 'Gasolina';
                 document.getElementById('s_litros').value = '';
                 document.getElementById('s_detalle').value = '';
                 document.getElementById('s_fecha').value = '';
-                alert("Guardado");
+                document.getElementById('s_responsable').value = '';
+                toggleS(); // Resetea visual de gasolina/otros
+                alert("Guardado y formulario limpio");
             });
         };
 
@@ -251,14 +238,15 @@
 
             onValue(ref(db, 'vehiculos'), s => {
                 const list = document.getElementById('list-vehiculos');
-                const sel = document.getElementById('s_vehiculo');
-                list.innerHTML = ""; sel.innerHTML = '<option value="">Vehículo...</option>';
+                list.innerHTML = ""; 
+                listaVehiculosGlobal = [];
                 s.forEach(c => {
                     const d = c.val();
+                    listaVehiculosGlobal.push(d);
                     const icon = d.tipo === 'Moto' ? '🏍️' : '🚗';
                     list.innerHTML += `<div class="bg-white p-3 rounded-xl border-l-8 border-red-700 shadow-sm flex justify-between items-center text-left"><div><p class="font-black text-xs uppercase text-gray-800">${icon} ${d.modelo}</p><p class="text-[10px] text-red-700 font-mono">${d.placa}</p></div><button onclick="elimF('vehiculos','${c.key}')" class="text-red-300"><i class="fa-solid fa-trash-can"></i></button></div>`;
-                    sel.innerHTML += `<option value="${d.modelo} [${d.placa}]">${d.modelo} (${d.placa})</option>`;
                 });
+                filtrarUnidadesRegistro();
             });
 
             onValue(ref(db, 'servicios'), s => {
@@ -266,29 +254,20 @@
                 list.innerHTML = "";
                 let arr = []; s.forEach(c => { arr.push({k: c.key, ...c.val()}) });
                 arr.sort((a,b) => b.ts - a.ts).forEach(d => {
-                    list.innerHTML += `<tr>
-                        <td class="p-3 font-bold text-gray-800 uppercase">${d.f}<br><span class="text-[8px] text-red-500 font-normal italic">${d.h || ''}</span></td>
-                        <td class="p-3 uppercase text-gray-700 font-black">${d.u}</td>
-                        <td class="p-3"><span class="bg-red-100 px-2 py-1 rounded text-[8px] font-black uppercase text-red-800">${d.t}</span></td>
-                        <td class="p-3 text-gray-600 italic text-[9px]">${d.d}<br><small class="text-gray-400 font-normal">Por: ${d.r}</small></td>
-                        <td class="p-3 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-200"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>`;
+                    list.innerHTML += `<tr><td class="p-3 font-bold text-gray-800 uppercase text-[8px]">${d.f}<br><span class="text-red-500 font-normal italic">${d.h || ''}</span></td><td class="p-3 uppercase text-gray-700 font-black">${d.u}</td><td class="p-3"><span class="bg-red-100 px-2 py-1 rounded text-[8px] font-black uppercase text-red-800">${d.t}</span></td><td class="p-3 text-gray-600 italic text-[9px]">${d.d}<br><small class="text-gray-400 font-normal">Por: ${d.r}</small></td><td class="p-3 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-200"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
             });
         }
 
         window.elimF = (p, k) => { 
-            const pin = prompt("🔐 PIN PARA ELIMINAR:");
-            if(pin === "2427") remove(ref(db, `${p}/${k}`)); 
-            else if (pin !== null) alert("PIN Incorrecto");
+            if(prompt("🔐 PIN PARA ELIMINAR:") === "2427") remove(ref(db, `${p}/${k}`)); 
+            else alert("PIN Incorrecto");
         };
         
         window.filtrar = () => {
             const input = document.getElementById('buscador-placa').value.toUpperCase();
-            const filas = document.getElementById('list-servicios').getElementsByTagName('tr');
-            for (let i = 0; i < filas.length; i++) {
-                filas[i].style.display = filas[i].textContent.toUpperCase().indexOf(input) > -1 ? "" : "none";
-            }
+            const filas = document.querySelectorAll("#list-servicios tr");
+            filas.forEach(f => f.style.display = f.textContent.toUpperCase().includes(input) ? "" : "none");
         };
 
         window.toggleS = () => {
@@ -300,10 +279,7 @@
         window.generarReportePDF = () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFontSize(18); doc.setTextColor(185, 28, 28);
-            doc.text("AYUNTAMIENTO DE IXIL", 105, 20, { align: "center" });
-            doc.setFontSize(10); doc.setTextColor(100);
-            doc.text("Reporte de Gestión Vehicular 2024-2027", 105, 28, { align: "center" });
+            doc.text("AYUNTAMIENTO DE IXIL - REPORTE", 105, 20, { align: "center" });
             const rows = [];
             document.querySelectorAll("#list-servicios tr").forEach(tr => {
                 if(tr.style.display !== "none") {
@@ -311,14 +287,8 @@
                     rows.push([c[0].innerText.replace("\n", " "), c[1].innerText, c[2].innerText, c[3].innerText.replace("\n", " ")]);
                 }
             });
-            doc.autoTable({ head: [['Fecha/Hora', 'Unidad', 'Acción', 'Detalles']], body: rows, startY: 35, theme: 'striped', headStyles: { fillColor: [185, 28, 28] }, styles: { fontSize: 7 } });
+            doc.autoTable({ head: [['Fecha', 'Unidad', 'Acción', 'Detalles']], body: rows, startY: 30, styles: { fontSize: 7 } });
             doc.save(`Reporte_Ixil.pdf`);
-        };
-
-        document.getElementById('btn-ruptura').onclick = () => {
-            if(prompt("Clave Maestra:") === "2427.ADMIN") {
-                if(confirm("¿Eliminar toda la base de datos?")) set(ref(db, '/'), null).then(()=>location.reload());
-            }
         };
     </script>
 </body>
