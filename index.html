@@ -56,8 +56,8 @@
             <div id="sec-responsables" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-700 h-fit">
                     <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic text-center">Nuevo Responsable</h3>
-                    <input type="text" id="r_nombre" placeholder="Nombre Completo" class="w-full p-2 border rounded mb-2 bg-white">
-                    <input type="text" id="r_cargo" placeholder="Cargo" class="w-full p-2 border rounded mb-3 bg-white">
+                    <input type="text" id="r_nombre" placeholder="Nombre Completo" class="w-full p-2 border rounded mb-2 bg-white text-black">
+                    <input type="text" id="r_cargo" placeholder="Cargo" class="w-full p-2 border rounded mb-3 bg-white text-black">
                     <button id="add-r" class="w-full bg-red-ixil text-white py-2 rounded font-bold uppercase text-xs">Agregar Persona</button>
                 </div>
                 <div id="list-responsables" class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4"></div>
@@ -95,16 +95,16 @@
                     </select>
                     
                     <div id="box-gas" class="relative mb-2">
-                        <input type="number" id="s_litros" inputmode="decimal" placeholder="Cantidad" class="w-full p-2 border rounded pr-8 bg-white">
+                        <input type="number" id="s_litros" inputmode="decimal" placeholder="Cantidad" class="w-full p-2 border rounded pr-8 bg-white text-black">
                         <span class="absolute right-3 top-2 font-bold text-gray-400">L</span>
                     </div>
 
                     <div id="box-otro" class="hidden mb-2">
-                        <textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded bg-white"></textarea>
+                        <textarea id="s_detalle" placeholder="Detalles..." class="w-full p-2 border rounded bg-white text-black"></textarea>
                     </div>
 
                     <div class="relative mb-2">
-                        <input type="date" id="s_fecha" class="w-full p-2 border rounded bg-white">
+                        <input type="date" id="s_fecha" class="w-full p-2 border rounded bg-white text-black">
                         <i class="fa-solid fa-calendar-days icono-fecha"></i>
                     </div>
 
@@ -120,7 +120,7 @@
                 <div class="lg:col-span-2">
                     <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
                         <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest self-center italic">Historial de Operaciones</h3>
-                        <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar unidad..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white">
+                        <input type="text" id="buscador-placa" onkeyup="filtrar()" placeholder="🔍 Filtrar unidad..." class="w-full md:w-64 p-2 border-2 border-red-100 rounded-full text-xs outline-none focus:border-red-500 shadow-inner bg-white text-black">
                     </div>
                     <div class="bg-white rounded-xl shadow overflow-x-auto">
                         <table class="w-full text-left text-[9px] md:text-xs">
@@ -152,6 +152,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         let listaVehiculosGlobal = [];
+        let listaServiciosGlobal = [];
 
         // LOGIN
         document.getElementById('btn-login').onclick = () => {
@@ -180,7 +181,18 @@
         document.getElementById('btn-tab-v').onclick = () => showTab('vehiculos');
         document.getElementById('btn-tab-m').onclick = () => showTab('mantenimientos');
 
-        // CRUD VEHÍCULOS
+        // AGREGAR RESPONSABLE
+        document.getElementById('add-r').onclick = () => {
+            const n = document.getElementById('r_nombre').value;
+            const c = document.getElementById('r_cargo').value;
+            if(n && c) {
+                push(ref(db, 'responsables'), { nombre: n, cargo: c });
+                document.getElementById('r_nombre').value = ''; 
+                document.getElementById('r_cargo').value = '';
+            } else { alert("Completa los campos"); }
+        };
+
+        // AGREGAR VEHÍCULO
         document.getElementById('add-v').onclick = () => {
             const t = document.getElementById('v_tipo').value;
             const m = document.getElementById('v_modelo').value;
@@ -189,7 +201,7 @@
             document.getElementById('v_modelo').value = ''; document.getElementById('v_placa').value = '';
         };
 
-        // FILTRO DE REGISTRO
+        // FILTRO DE UNIDADES PARA EL SELECTOR DEL HISTORIAL
         window.filtrarUnidadesRegistro = () => {
             const tipoFiltro = document.getElementById('f_tipo_registro').value;
             const sel = document.getElementById('s_vehiculo');
@@ -199,7 +211,7 @@
             });
         };
 
-        // GUARDAR REGISTRO Y LIMPIAR
+        // GUARDAR REGISTRO E HISTORIAL
         document.getElementById('add-s').onclick = () => {
             const v = document.getElementById('s_vehiculo').value;
             const r = document.getElementById('s_responsable').value;
@@ -212,18 +224,16 @@
 
             push(ref(db, 'servicios'), { u: v, t: tipoB, d: det, f: f, h: h, r: r, ts: Date.now() })
             .then(() => {
-                // LIMPIEZA TOTAL DE REGISTRO
                 document.getElementById('s_vehiculo').value = '';
-                document.getElementById('s_tipo').value = 'Gasolina';
                 document.getElementById('s_litros').value = '';
                 document.getElementById('s_detalle').value = '';
                 document.getElementById('s_fecha').value = '';
                 document.getElementById('s_responsable').value = '';
-                toggleS(); // Resetea visual de gasolina/otros
-                alert("Guardado y formulario limpio");
+                alert("Guardado");
             });
         };
 
+        // SINCRONIZACIÓN FIREBASE
         function sync() {
             onValue(ref(db, 'responsables'), s => {
                 const list = document.getElementById('list-responsables');
@@ -252,8 +262,12 @@
             onValue(ref(db, 'servicios'), s => {
                 const list = document.getElementById('list-servicios');
                 list.innerHTML = "";
-                let arr = []; s.forEach(c => { arr.push({k: c.key, ...c.val()}) });
-                arr.sort((a,b) => b.ts - a.ts).forEach(d => {
+                listaServiciosGlobal = [];
+                s.forEach(c => {
+                    const val = c.val();
+                    listaServiciosGlobal.push({k: c.key, ...val});
+                });
+                listaServiciosGlobal.sort((a,b) => b.ts - a.ts).forEach(d => {
                     list.innerHTML += `<tr><td class="p-3 font-bold text-gray-800 uppercase text-[8px]">${d.f}<br><span class="text-red-500 font-normal italic">${d.h || ''}</span></td><td class="p-3 uppercase text-gray-700 font-black">${d.u}</td><td class="p-3"><span class="bg-red-100 px-2 py-1 rounded text-[8px] font-black uppercase text-red-800">${d.t}</span></td><td class="p-3 text-gray-600 italic text-[9px]">${d.d}<br><small class="text-gray-400 font-normal">Por: ${d.r}</small></td><td class="p-3 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-200"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
             });
@@ -276,18 +290,34 @@
             document.getElementById('box-otro').classList.toggle('hidden', t === 'Gasolina');
         };
 
+        // REPORTE PDF CON FILTRO DE FECHAS
         window.generarReportePDF = () => {
+            const opcion = confirm("¿Deseas filtrar por rango de fechas? (Cancelar para reporte completo)");
+            let reporteData = listaServiciosGlobal;
+
+            if (opcion) {
+                const inicio = prompt("Fecha de inicio (AAAA-MM-DD):");
+                const fin = prompt("Fecha de fin (AAAA-MM-DD):");
+                
+                if (inicio && fin) {
+                    reporteData = listaServiciosGlobal.filter(s => s.f >= inicio && s.f <= fin);
+                } else {
+                    return alert("Rango de fechas no válido");
+                }
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.text("AYUNTAMIENTO DE IXIL - REPORTE", 105, 20, { align: "center" });
-            const rows = [];
-            document.querySelectorAll("#list-servicios tr").forEach(tr => {
-                if(tr.style.display !== "none") {
-                    const c = tr.querySelectorAll("td");
-                    rows.push([c[0].innerText.replace("\n", " "), c[1].innerText, c[2].innerText, c[3].innerText.replace("\n", " ")]);
-                }
+            
+            const rows = reporteData.map(d => [d.f + ' ' + (d.h || ''), d.u, d.t, d.d + ' (Resp: ' + d.r + ')']);
+            
+            doc.autoTable({ 
+                head: [['Fecha/Hora', 'Unidad', 'Acción', 'Detalles']], 
+                body: rows, 
+                startY: 30, 
+                styles: { fontSize: 7 } 
             });
-            doc.autoTable({ head: [['Fecha', 'Unidad', 'Acción', 'Detalles']], body: rows, startY: 30, styles: { fontSize: 7 } });
             doc.save(`Reporte_Ixil.pdf`);
         };
     </script>
