@@ -65,7 +65,7 @@
 
             <div id="sec-vehiculos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-700 h-fit">
-                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic text-center">Alta de Unidad</h3>
+                    <h3 id="form-v-title" class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic text-center">Alta de Unidad</h3>
                     <select id="v_tipo" class="w-full p-2 border rounded mb-2 bg-white text-sm">
                         <option value="Carro">🚗 Carro / Camioneta</option>
                         <option value="Moto">🏍️ Motocicleta</option>
@@ -73,6 +73,7 @@
                     <input type="text" id="v_modelo" placeholder="Modelo" class="w-full p-2 border rounded mb-2 bg-white">
                     <input type="text" id="v_placa" placeholder="Placa" class="w-full p-2 border rounded mb-3 uppercase bg-white">
                     <button id="add-v" class="w-full bg-red-ixil text-white py-2 rounded font-bold uppercase text-xs">Guardar Vehículo</button>
+                    <button id="cancel-edit-v" class="w-full bg-gray-500 text-white py-1 rounded font-bold uppercase text-[10px] mt-2 hidden">Cancelar Edición</button>
                 </div>
                 <div id="list-vehiculos" class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
@@ -126,7 +127,7 @@
                         <table class="w-full text-left text-[9px] md:text-xs">
                             <thead class="bg-red-50 border-b text-red-900 uppercase font-black">
                                 <tr><th class="p-3">Fecha/Hora</th><th class="p-3">Vehículo</th><th class="p-3">Acción</th><th class="p-3">Detalle</th><th class="p-3">X</th></tr>
-                            </thead>
+                             Clyde </thead>
                             <tbody id="list-servicios" class="divide-y divide-gray-100"></tbody>
                         </table>
                     </div>
@@ -153,6 +154,7 @@
         const db = getDatabase(app);
         let listaVehiculosGlobal = [];
         let listaServiciosGlobal = [];
+        let idVehiculoEditando = null; // Variable de control para saber si estamos editando un vehículo
 
         // LOGIN
         document.getElementById('btn-login').onclick = () => {
@@ -192,13 +194,63 @@
             } else { alert("Completa los campos"); }
         };
 
-        // AGREGAR VEHÍCULO
+        // AGREGAR / EDITAR VEHÍCULO
         document.getElementById('add-v').onclick = () => {
             const t = document.getElementById('v_tipo').value;
             const m = document.getElementById('v_modelo').value;
             const p = document.getElementById('v_placa').value.toUpperCase();
-            if(m && p) push(ref(db, 'vehiculos'), { tipo: t, modelo: m, placa: p });
-            document.getElementById('v_modelo').value = ''; document.getElementById('v_placa').value = '';
+            
+            if(!m || !p) return alert("Completa todos los campos del vehículo");
+
+            if(idVehiculoEditando) {
+                // Modo Edición: Se sobreescribe usando set en la misma ubicación
+                set(ref(db, `vehiculos/${idVehiculoEditando}`), { tipo: t, modelo: m, placa: p })
+                .then(() => {
+                    alert("Vehículo actualizado correctamente");
+                    resetFormularioVehiculo();
+                });
+            } else {
+                // Modo Alta nuevo
+                push(ref(db, 'vehiculos'), { tipo: t, modelo: m, placa: p });
+                resetFormularioVehiculo();
+            }
+        };
+
+        // Función para cancelar o limpiar el estado de edición del vehículo
+        function resetFormularioVehiculo() {
+            idVehiculoEditando = null;
+            document.getElementById('v_modelo').value = ''; 
+            document.getElementById('v_placa').value = '';
+            document.getElementById('form-v-title').innerText = "Alta de Unidad";
+            
+            const btnGuardar = document.getElementById('add-v');
+            btnGuardar.innerText = "Guardar Vehículo";
+            btnGuardar.classList.remove('bg-yellow-500', 'text-black');
+            btnGuardar.classList.add('bg-red-ixil', 'text-white');
+            
+            document.getElementById('cancel-edit-v').classList.add('hidden');
+        }
+
+        document.getElementById('cancel-edit-v').onclick = () => resetFormularioVehiculo();
+
+        // Configurar la interfaz de edición al dar clic en el botón de edición
+        window.prepararEdicionVehiculo = (key, tipo, modelo, placa) => {
+            idVehiculoEditando = key;
+            document.getElementById('v_tipo').value = tipo;
+            document.getElementById('v_modelo').value = modelo;
+            document.getElementById('v_placa').value = placa;
+            
+            document.getElementById('form-v-title').innerText = "Editar Unidad";
+            
+            const btnGuardar = document.getElementById('add-v');
+            btnGuardar.innerText = "Actualizar Vehículo";
+            btnGuardar.classList.remove('bg-red-ixil', 'text-white');
+            btnGuardar.classList.add('bg-yellow-500', 'text-black');
+            
+            document.getElementById('cancel-edit-v').classList.remove('hidden');
+            
+            // Hace scroll suave hacia el formulario en pantallas móviles
+            document.getElementById('form-v-title').scrollIntoView({ behavior: 'smooth' });
         };
 
         // FILTRO DE UNIDADES PARA EL SELECTOR DEL HISTORIAL
@@ -254,7 +306,17 @@
                     const d = c.val();
                     listaVehiculosGlobal.push(d);
                     const icon = d.tipo === 'Moto' ? '🏍️' : '🚗';
-                    list.innerHTML += `<div class="bg-white p-3 rounded-xl border-l-8 border-red-700 shadow-sm flex justify-between items-center text-left"><div><p class="font-black text-xs uppercase text-gray-800">${icon} ${d.modelo}</p><p class="text-[10px] text-red-700 font-mono">${d.placa}</p></div><button onclick="elimF('vehiculos','${c.key}')" class="text-red-300"><i class="fa-solid fa-trash-can"></i></button></div>`;
+                    list.innerHTML += `
+                        <div class="bg-white p-3 rounded-xl border-l-8 border-red-700 shadow-sm flex justify-between items-center text-left">
+                            <div>
+                                <p class="font-black text-xs uppercase text-gray-800">${icon} ${d.modelo}</p>
+                                <p class="text-[10px] text-red-700 font-mono">${d.placa}</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="prepararEdicionVehiculo('${c.key}', '${d.tipo}', '${d.modelo}', '${d.placa}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="elimF('vehiculos','${c.key}')" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </div>`;
                 });
                 filtrarUnidadesRegistro();
             });
@@ -274,8 +336,12 @@
         }
 
         window.elimF = (p, k) => { 
-            if(prompt("🔐 PIN PARA ELIMINAR:") === "2427") remove(ref(db, `${p}/${k}`)); 
-            else alert("PIN Incorrecto");
+            if(prompt("🔐 PIN PARA ELIMINAR:") === "2427") {
+                remove(ref(db, `${p}/${k}`)); 
+                if(p === 'vehiculos' && idVehiculoEditando === k) {
+                    resetFormularioVehiculo();
+                }
+            } else alert("PIN Incorrecto");
         };
         
         window.filtrar = () => {
