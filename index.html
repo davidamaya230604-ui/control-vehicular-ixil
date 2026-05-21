@@ -80,7 +80,7 @@
 
             <div id="sec-mantenimientos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 h-fit">
-                    <h3 class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic text-center">Registro de Acción</h3>
+                    <h3 id="form-s-title" class="text-lg font-bold text-red-700 mb-4 uppercase text-sm italic text-center">Registro de Acción</h3>
                     
                     <select id="f_tipo_registro" class="w-full p-2 border rounded bg-white mb-2 text-sm font-bold border-red-200" onchange="filtrarUnidadesRegistro()">
                         <option value="Carro">Mostrar: Carros / Camionetas 🚗</option>
@@ -111,8 +111,11 @@
 
                     <select id="s_responsable" class="w-full p-2 border rounded bg-white mb-3 text-sm"></select>
                     
-                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-3 rounded font-bold shadow mb-4 uppercase text-xs">Guardar Registro</button>
+                    <button id="add-s" class="w-full bg-yellow-500 text-red-900 py-3 rounded font-bold shadow mb-2 uppercase text-xs">Guardar Registro</button>
+                    <button id="cancel-edit-s" class="w-full bg-gray-500 text-white py-1 rounded font-bold uppercase text-[10px] hidden">Cancelar Edición</button>
                     
+                    <div class="border-t my-4 pt-4"></div>
+
                     <button onclick="generarReportePDF()" class="w-full bg-slate-800 text-white py-2 rounded font-bold text-[10px] shadow uppercase italic">
                         <i class="fa-solid fa-file-pdf mr-2"></i> Generar Reporte PDF
                     </button>
@@ -126,8 +129,8 @@
                     <div class="bg-white rounded-xl shadow overflow-x-auto">
                         <table class="w-full text-left text-[9px] md:text-xs">
                             <thead class="bg-red-50 border-b text-red-900 uppercase font-black">
-                                <tr><th class="p-3">Fecha/Hora</th><th class="p-3">Vehículo</th><th class="p-3">Acción</th><th class="p-3">Detalle</th><th class="p-3">X</th></tr>
-                             Clyde </thead>
+                                <tr><th class="p-3">Fecha/Hora</th><th class="p-3">Vehículo</th><th class="p-3">Acción</th><th class="p-3">Detalle</th><th class="p-3">Acciones</th></tr>
+                            </thead>
                             <tbody id="list-servicios" class="divide-y divide-gray-100"></tbody>
                         </table>
                     </div>
@@ -154,7 +157,8 @@
         const db = getDatabase(app);
         let listaVehiculosGlobal = [];
         let listaServiciosGlobal = [];
-        let idVehiculoEditando = null; // Variable de control para saber si estamos editando un vehículo
+        let idVehiculoEditando = null;
+        let idServicioEditando = null; // Variable de control para edición de registros del historial
 
         // LOGIN
         document.getElementById('btn-login').onclick = () => {
@@ -203,20 +207,17 @@
             if(!m || !p) return alert("Completa todos los campos del vehículo");
 
             if(idVehiculoEditando) {
-                // Modo Edición: Se sobreescribe usando set en la misma ubicación
                 set(ref(db, `vehiculos/${idVehiculoEditando}`), { tipo: t, modelo: m, placa: p })
                 .then(() => {
                     alert("Vehículo actualizado correctamente");
                     resetFormularioVehiculo();
                 });
             } else {
-                // Modo Alta nuevo
                 push(ref(db, 'vehiculos'), { tipo: t, modelo: m, placa: p });
                 resetFormularioVehiculo();
             }
         };
 
-        // Función para cancelar o limpiar el estado de edición del vehículo
         function resetFormularioVehiculo() {
             idVehiculoEditando = null;
             document.getElementById('v_modelo').value = ''; 
@@ -227,29 +228,23 @@
             btnGuardar.innerText = "Guardar Vehículo";
             btnGuardar.classList.remove('bg-yellow-500', 'text-black');
             btnGuardar.classList.add('bg-red-ixil', 'text-white');
-            
             document.getElementById('cancel-edit-v').classList.add('hidden');
         }
 
         document.getElementById('cancel-edit-v').onclick = () => resetFormularioVehiculo();
 
-        // Configurar la interfaz de edición al dar clic en el botón de edición
         window.prepararEdicionVehiculo = (key, tipo, modelo, placa) => {
             idVehiculoEditando = key;
             document.getElementById('v_tipo').value = tipo;
             document.getElementById('v_modelo').value = modelo;
             document.getElementById('v_placa').value = placa;
-            
             document.getElementById('form-v-title').innerText = "Editar Unidad";
             
             const btnGuardar = document.getElementById('add-v');
             btnGuardar.innerText = "Actualizar Vehículo";
             btnGuardar.classList.remove('bg-red-ixil', 'text-white');
             btnGuardar.classList.add('bg-yellow-500', 'text-black');
-            
             document.getElementById('cancel-edit-v').classList.remove('hidden');
-            
-            // Hace scroll suave hacia el formulario en pantallas móviles
             document.getElementById('form-v-title').scrollIntoView({ behavior: 'smooth' });
         };
 
@@ -263,7 +258,7 @@
             });
         };
 
-        // GUARDAR REGISTRO E HISTORIAL
+        // GUARDAR / ACTUALIZAR REGISTRO E HISTORIAL
         document.getElementById('add-s').onclick = () => {
             const v = document.getElementById('s_vehiculo').value;
             const r = document.getElementById('s_responsable').value;
@@ -272,17 +267,79 @@
             
             const tipoB = document.getElementById('s_tipo').value;
             const det = tipoB === 'Gasolina' ? document.getElementById('s_litros').value + ' L' : document.getElementById('s_detalle').value;
-            const h = new Date().toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'});
+            
+            if(idServicioEditando) {
+                // Buscamos el registro anterior para mantener su hora exacta y timestamp original
+                const regViejo = listaServiciosGlobal.find(item => item.k === idServicioEditando);
+                const horaOriginal = regViejo ? regViejo.h : new Date().toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'});
+                const tsOriginal = regViejo ? regViejo.ts : Date.now();
 
-            push(ref(db, 'servicios'), { u: v, t: tipoB, d: det, f: f, h: h, r: r, ts: Date.now() })
-            .then(() => {
-                document.getElementById('s_vehiculo').value = '';
-                document.getElementById('s_litros').value = '';
-                document.getElementById('s_detalle').value = '';
-                document.getElementById('s_fecha').value = '';
-                document.getElementById('s_responsable').value = '';
-                alert("Guardado");
-            });
+                set(ref(db, `servicios/${idServicioEditando}`), { u: v, t: tipoB, d: det, f: f, h: horaOriginal, r: r, ts: tsOriginal })
+                .then(() => {
+                    alert("Registro modificado correctamente");
+                    resetFormularioServicio();
+                });
+            } else {
+                // Registro Nuevo
+                const h = new Date().toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'});
+                push(ref(db, 'servicios'), { u: v, t: tipoB, d: det, f: f, h: h, r: r, ts: Date.now() })
+                .then(() => {
+                    resetFormularioServicio();
+                    alert("Guardado");
+                });
+            }
+        };
+
+        function resetFormularioServicio() {
+            idServicioEditando = null;
+            document.getElementById('s_vehiculo').value = '';
+            document.getElementById('s_litros').value = '';
+            document.getElementById('s_detalle').value = '';
+            document.getElementById('s_fecha').value = '';
+            document.getElementById('s_responsable').value = '';
+            document.getElementById('form-s-title').innerText = "Registro de Acción";
+            
+            const btnGuardar = document.getElementById('add-s');
+            btnGuardar.innerText = "Guardar Registro";
+            btnGuardar.className = "w-full bg-yellow-500 text-red-900 py-3 rounded font-bold shadow mb-2 uppercase text-xs";
+            document.getElementById('cancel-edit-s').classList.add('hidden');
+        }
+
+        document.getElementById('cancel-edit-s').onclick = () => resetFormularioServicio();
+
+        // Configurar la interfaz para modificar una acción del historial
+        window.prepararEdicionServicio = (key, vehiculo, tipo, detalle, fecha, responsable) => {
+            idServicioEditando = key;
+            showTab('mantenimientos'); // Mover a la pestaña del formulario
+
+            // Intentamos deducir el tipo de unidad (Carro/Moto) basándonos en la lista global de vehículos
+            const infoVehiculo = listaVehiculosGlobal.find(v => `${v.modelo} [${v.placa}]` === vehiculo);
+            if(infoVehiculo) {
+                document.getElementById('f_tipo_registro').value = infoVehiculo.tipo;
+                filtrarUnidadesRegistro();
+            }
+
+            document.getElementById('s_vehiculo').value = vehiculo;
+            document.getElementById('s_tipo').value = tipo;
+            toggleS();
+
+            if(tipo === 'Gasolina') {
+                document.getElementById('s_litros').value = detalle.replace(' L', '');
+            } else {
+                document.getElementById('s_detalle').value = detalle;
+            }
+
+            document.getElementById('s_fecha').value = fecha;
+            document.getElementById('s_responsable').value = responsable;
+            
+            document.getElementById('form-s-title').innerText = "Modificar Acción";
+            
+            const btnGuardar = document.getElementById('add-s');
+            btnGuardar.innerText = "Actualizar Registro";
+            btnGuardar.className = "w-full bg-blue-600 text-white py-3 rounded font-bold shadow mb-2 uppercase text-xs";
+            
+            document.getElementById('cancel-edit-s').classList.remove('hidden');
+            document.getElementById('form-s-title').scrollIntoView({ behavior: 'smooth' });
         };
 
         // SINCRONIZACIÓN FIREBASE
@@ -330,7 +387,19 @@
                     listaServiciosGlobal.push({k: c.key, ...val});
                 });
                 listaServiciosGlobal.sort((a,b) => b.ts - a.ts).forEach(d => {
-                    list.innerHTML += `<tr><td class="p-3 font-bold text-gray-800 uppercase text-[8px]">${d.f}<br><span class="text-red-500 font-normal italic">${d.h || ''}</span></td><td class="p-3 uppercase text-gray-700 font-black">${d.u}</td><td class="p-3"><span class="bg-red-100 px-2 py-1 rounded text-[8px] font-black uppercase text-red-800">${d.t}</span></td><td class="p-3 text-gray-600 italic text-[9px]">${d.d}<br><small class="text-gray-400 font-normal">Por: ${d.r}</small></td><td class="p-3 text-center"><button onclick="elimF('servicios','${d.k}')" class="text-red-200"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    list.innerHTML += `
+                        <tr>
+                            <td class="p-3 font-bold text-gray-800 uppercase text-[8px]">${d.f}<br><span class="text-red-500 font-normal italic">${d.h || ''}</span></td>
+                            <td class="p-3 uppercase text-gray-700 font-black">${d.u}</td>
+                            <td class="p-3"><span class="bg-red-100 px-2 py-1 rounded text-[8px] font-black uppercase text-red-800">${d.t}</span></td>
+                            <td class="p-3 text-gray-600 italic text-[9px]">${d.d}<br><small class="text-gray-400 font-normal">Por: ${d.r}</small></td>
+                            <td class="p-3 text-center">
+                                <div class="flex gap-2 justify-center">
+                                    <button onclick="prepararEdicionServicio('${d.k}', '${d.u}', '${d.t}', '${d.d}', '${d.f}', '${d.r}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button onclick="elimF('servicios','${d.k}')" class="text-red-200 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>`;
                 });
             });
         }
@@ -338,9 +407,8 @@
         window.elimF = (p, k) => { 
             if(prompt("🔐 PIN PARA ELIMINAR:") === "2427") {
                 remove(ref(db, `${p}/${k}`)); 
-                if(p === 'vehiculos' && idVehiculoEditando === k) {
-                    resetFormularioVehiculo();
-                }
+                if(p === 'vehiculos' && idVehiculoEditando === k) resetFormularioVehiculo();
+                if(p === 'servicios' && idServicioEditando === k) resetFormularioServicio();
             } else alert("PIN Incorrecto");
         };
         
